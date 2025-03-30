@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:9000";
+const API_URL = "http://localhost:9000/api";
 
 // Carregar Status
 function loadStatus() {
@@ -22,11 +22,11 @@ function loadTasks() {
                 const status = task.Status ? task.Status.name : 'Indefinido';
                 let statusBadgeClass;
 
-                if (status === 'concluída') {
+                if (status === 'Concluída') {
                     statusBadgeClass = 'bg-success'; 
-                } else if (status === 'pendente') {
+                } else if (status === 'Pendente') {
                     statusBadgeClass = 'bg-warning';
-                } else if (status === 'em andamento') {
+                } else if (status === 'Em Andamento') {
                     statusBadgeClass = 'bg-primary';
                 } else {
                     statusBadgeClass = 'bg-secondary';
@@ -49,8 +49,8 @@ function loadTasks() {
                                 <i class="bi bi-trash"></i> Excluir
                             </button>
                             <button class="btn btn-success btn-sm toggle-status">
-                                <i class="bi ${status === "concluída" ? "bi-arrow-counterclockwise" : "bi-check-lg"}"></i> 
-                                ${status === "concluída" ? "Reabrir" : "Concluir"}
+                                <i class="bi ${status === "Concluída" ? "bi-arrow-counterclockwise" : "bi-check-lg"}"></i> 
+                                ${status === "Concluída" ? "Reabrir" : "Concluir"}
                             </button>
                         </td>
                     </tr>

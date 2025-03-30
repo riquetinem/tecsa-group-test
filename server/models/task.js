@@ -1,25 +1,38 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  const Task = sequelize.define('Task', {
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.STRING,
-    },
-    statusId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-  });
+const { Model, DataTypes } = require('sequelize');
 
-  Task.associate = (models) => {
-    Task.belongsTo(models.Status, { foreignKey: 'statusId' });
-  };
+module.exports = (sequelize) => {
+  class Task extends Model {
+    static associate(models) {
+      Task.belongsTo(models.Statuses, { foreignKey: 'statusId' });
+    }
+  }
+
+  Task.init(
+    {
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      statusId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Statuses',
+          key: 'id',
+        },
+      },
+    },
+    {
+      sequelize,
+      modelName: 'Task',
+      timestamps: true,
+    }
+  );
 
   return Task;
 };

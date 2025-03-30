@@ -46,6 +46,10 @@ docker-compose up -d
 cd backend
 cd task-manager
 npx sequelize-cli db:migrate
+npx sequelize-cli db:seed:all
+## desfazer migration
+## npx sequelize-cli db:migrate:undo:all
+
 ```
 
 Se precisar de mais algum ajuste ou adicionar algo específico, só avisar! 😄
