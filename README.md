@@ -30,7 +30,7 @@ A aplicação **Task Manager** é uma API RESTful para gerenciar tarefas. Ela pe
 
 ```bash
 git clone https://github.com/riquetinem/tecsa-group-test.git
-cd cd .\tecsa-group-test\
+cd .\tecsa-group-test\
 ```
 
 ### 2. Instalar container 
