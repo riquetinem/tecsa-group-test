@@ -1,88 +1,73 @@
 const API_URL = "http://localhost:9000/api";
 
-// Carregar Status
-function loadStatus() {
-    $.get(`${API_URL}/status`, function(status) {
-        statusList = status;
-        $("#task-status").empty();
-        status.forEach(status => {
-            $("#task-status").append(`<option value="${status.id}">${status.name}</option>`);
-        });
-    });
+function showError(message) {
+    const alertContainer = $("#alert-container");
+    alertContainer.text(message).removeClass("d-none");
+    setTimeout(() => alertContainer.addClass("d-none"), 5000);
 }
 
-// Carregar tarefas
 function loadTasks() {
     $.get(`${API_URL}/tasks`, function(tasks) {
-        console.log("Tarefas recebidas:", tasks); 
         $("#task-list").empty();
-        
-        if (Array.isArray(tasks) && tasks.length > 0) {
-            tasks.forEach(task => {
-                const status = task.Status ? task.Status.name : 'Indefinido';
-                let statusBadgeClass;
+        tasks.forEach(task => {
+            let statusText;
+            let statusClass;
 
-                if (status === 'Concluída') {
-                    statusBadgeClass = 'bg-success'; 
-                } else if (status === 'Pendente') {
-                    statusBadgeClass = 'bg-warning';
-                } else if (status === 'Em Andamento') {
-                    statusBadgeClass = 'bg-primary';
-                } else {
-                    statusBadgeClass = 'bg-secondary';
-                }
+            switch (task.statusId) {
+                case 1:
+                    statusText = task.Status.name;
+                    statusClass = "text-warning";
+                    break;
+                case 2:
+                    statusText = task.Status.name;
+                    statusClass = "text-primary";
+                    break;
+                case 3:
+                    statusText = task.Status.name;
+                    statusClass = "text-success";
+                    break;
+                default:
+                    statusText = "Desconhecido";
+                    statusClass = "text-muted";
+            }
 
-                $("#task-list").append(`
-                    <tr data-id="${task.id}" data-statusid="${task.statusId}">
-                        <td class="text-center">${task.title}</td>
-                        <td class="text-center">${task.description || "Sem descrição"}</td>
-                        <td class="text-center">
-                            <span class="badge ${statusBadgeClass}">
-                                ${status}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-warning btn-sm edit-task">
-                                <i class="bi bi-pencil-square"></i> Editar
-                            </button>
-                            <button class="btn btn-danger btn-sm delete-task">
-                                <i class="bi bi-trash"></i> Excluir
-                            </button>
-                            <button class="btn btn-success btn-sm toggle-status">
-                                <i class="bi ${status === "Concluída" ? "bi-arrow-counterclockwise" : "bi-check-lg"}"></i> 
-                                ${status === "Concluída" ? "Reabrir" : "Concluir"}
-                            </button>
-                        </td>
-                    </tr>
-                `);
-            });
-        } else {
-            console.log("Nenhuma tarefa encontrada.");
             $("#task-list").append(`
-                <tr>
-                    <td colspan="4" class="text-center">Nenhuma tarefa encontrada.</td>
+                <tr data-id="${task.id}" data-statusid="${task.statusId}">
+                    <td>${task.id}</td>
+                    <td>${task.title}</td>
+                    <td>${task.description || ""}</td>
+                    <td class="${statusClass} fw-bold">${statusText}</td>
+                    <td>
+                        ${task.statusId === 3 
+                            ? `<button class="btn btn-secondary reopen-task"><i class="fa-solid fa-rotate-left"></i></button>`
+                            : `<button class="btn btn-success toggle-status"><i class="fa-solid fa-check"></i></button>`
+                        }
+                        <button class="btn btn-warning edit-task"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-danger delete-task"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 </tr>
             `);
-        }
-    }).fail(function(xhr) {
+        });
+    }).fail(xhr => {
         console.error("Erro ao carregar tarefas:", xhr.responseText);
-        $("#task-list").append(`
-            <tr>
-                <td colspan="4" class="text-center text-danger">Erro ao carregar tarefas. Tente novamente mais tarde.</td>
-            </tr>
-        `);
+        showError(xhr.responseJSON?.message || "Erro ao carregar tarefas.");
     });
 }
 
-// Criar/Atualizar Tarefa
+
 $("#task-form").submit(function(event) {
     event.preventDefault();
     const id = $("#task-id").val();
     const taskData = {
-        title: $("#task-title").val(),
-        description: $("#task-description").val(),
+        title: $("#task-title").val().trim(),
+        description: $("#task-description").val().trim(),
         statusId: $("#task-status").val(),
     };
+
+    if (!taskData.title) {
+        showError("O título da tarefa é obrigatório!");
+        return;
+    }
 
     const requestType = id ? "PUT" : "POST";
     const requestUrl = id ? `${API_URL}/tasks/${id}` : `${API_URL}/tasks`;
@@ -92,67 +77,81 @@ $("#task-form").submit(function(event) {
         type: requestType,
         contentType: "application/json",
         data: JSON.stringify(taskData),
-        success: loadTasks,
+        success: function () {
+            loadTasks();
+            $("#task-form").trigger("reset");
+            $("#task-id").val("");
+        },
+        error: function (xhr) {
+            console.error("Erro ao salvar tarefa:", xhr.responseText);
+            const errorMessage = xhr.responseJSON?.message || "Erro ao salvar a tarefa.";
+            showError(errorMessage);
+        }
     });
-
-    $(this).trigger("reset");
-    $("#task-id").val("");
 });
 
-// Editar Tarefa
 $(document).on("click", ".edit-task", function() {
     const row = $(this).closest("tr");
-    const taskId = row.data("id");
-    const taskTitle = row.find("td:eq(0)").text();
-    const taskDescription = row.find("td:eq(1)").text();
-    const taskStatusId = row.data("statusid");
-
-    $("#task-id").val(taskId);
-    $("#task-title").val(taskTitle);
-    $("#task-description").val(taskDescription);
-
-    $("#task-status").val(taskStatusId);
+    $("#task-id").val(row.data("id"));
+    $("#task-title").val(row.children().eq(1).text());
+    $("#task-description").val(row.children().eq(2).text());
+    $("#task-status").val(row.data("statusid"));
 });
 
-
-// Excluir Tarefa
 $(document).on("click", ".delete-task", function() {
     const id = $(this).closest("tr").data("id");
 
-    if (!confirm("Tem certeza que deseja excluir esta tarefa?")) {
-        return;
-    }
+    if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return;
 
     $.ajax({
         url: `${API_URL}/tasks/${id}`,
         type: "DELETE",
         success: loadTasks,
-        error: function(xhr) { console.error("Erro ao excluir:", xhr.responseText); }
+        error: function(xhr) {
+            console.error("Erro ao excluir tarefa:", xhr.responseText);
+            showError(xhr.responseJSON?.message || "Erro ao excluir a tarefa.");
+        }
     });
 });
 
-// Alterar Status
-$(document).on("click", ".toggle-status", function() {
+$(document).on("click", ".toggle-status, .reopen-task", function() {
     const row = $(this).closest("tr");
     const id = row.data("id");
-    const currentStatusId = row.data("statusid");
-    let newStatusId;
-
-    if (currentStatusId === 3) {
-        newStatusId = 1;
-    } else {
-        newStatusId = 3;
-    }
+    const isCompleted = row.data("statusid") === 3;
+    let newStatusId = isCompleted ? 1 : 3;
 
     $.ajax({
         url: `${API_URL}/tasks/${id}`,
         type: "PUT",
         contentType: "application/json",
-        data: JSON.stringify({ statusId: newStatusId }), 
+        data: JSON.stringify({ statusId: newStatusId }),
         success: loadTasks,
-        error: function(xhr) { console.error("Erro ao atualizar status:", xhr.responseText); }
+        error: function(xhr) {
+            console.error("Erro ao atualizar status:", xhr.responseText);
+            showError(xhr.responseJSON?.message || "Erro ao atualizar status.");
+        }
     });
 });
 
-$(document).ready(loadStatus);
+function loadStatus() {
+    $.get(`${API_URL}/status`, function(statuses) {
+        const statusSelect = $("#task-status");
+        statusSelect.empty(); // Limpa o select antes de adicionar novos itens
+
+        statuses.forEach(status => {
+            statusSelect.append(`<option value="${status.id}">${status.name}</option>`);
+        });
+    }).fail(xhr => {
+        console.error("Erro ao carregar status:", xhr.responseText);
+        showError(xhr.responseJSON?.message || "Erro ao carregar status.");
+    });
+}
+
+$(document).ready(function() {
+    loadStatus();
+    loadTasks();
+});
+
+
 $(document).ready(loadTasks);
+$(document).ready(loadStatus);
