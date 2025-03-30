@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend/task-manager
-    container_name: backend
+    build: ./server
+    container_name: server
     ports:
       - "9000:9000"
     depends_on:
@@ -16,24 +16,10 @@ services:
       - DB_PASS=root
       - DB_NAME=tasks_db
       - DB_DIALECT=mysql
-      - JWT_SECRET=sua_chave_secreta_aqui
     volumes:
-      - ./backend/task-manager:/app
+      - ./server:/app
       - /app/node_modules
     restart: always
-
-  # frontend:
-  #   build: ./frontend
-  #   container_name: frontend
-  #   ports:
-  #     - "3000:80"
-  #   depends_on:
-  #     - backend
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #   restart: always
-
   mysql:
     image: mysql:8
     container_name: mysql
