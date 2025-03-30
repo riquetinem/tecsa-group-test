@@ -1,0 +1,28 @@
+### Criar uma nova tarefa
+POST https://localhost:9000/tasks
+Content-Type: application/json
+
+{
+  "title": "Estudar Node.js",
+  "description": "Ler a documentação e praticar com pequenos projetos",
+  "status": "pendente"
+}
+
+### Obter todas as tarefas
+GET http://localhost:9000/tasks
+
+### Obter todos os status
+GET http://localhost:9000/status
+
+### Atualizar uma tarefa existente
+PUT http://localhost:9000/tasks/1
+Content-Type: application/json
+
+{
+  "title": "Estudar Express.js",
+  "description": "Aprofundar no framework Express para criar APIs",
+  "status": "concluído"
+}
+
+### Deletar uma tarefa
+DELETE http://localhost:9000/tasks/3
